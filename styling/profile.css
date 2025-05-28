@@ -1,0 +1,14 @@
+.img-profile{
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+}
+
+.bar-profile{
+    gap: 10%;
+}
+
+.interaction-text:hover{
+    color: #EEE9E8 !important;
+}

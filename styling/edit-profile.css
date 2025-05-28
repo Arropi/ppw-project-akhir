@@ -1,0 +1,53 @@
+.img-container{
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.img-container label{
+    cursor: pointer;
+}
+
+.img{
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.overlay{
+    background-color: rgba(46, 46, 46, 0.5);
+    font-size: 40px;
+    color: white;
+}
+
+.form-input-bio[type=text]{
+    background-color: #F7ECDC;
+    border-radius: 30px;
+    height: 100px !important;
+}
+
+
+.form-input-user{
+    background-color: #F7ECDC;
+    border-radius: 30px;
+}
+
+#img-profile{
+    display: none;
+}
+
+.btn-save{
+    border-radius: 30px;
+    color: white;
+    background-color: #55423B;
+    padding: 10px 30px;
+}
+
+.btn-back{
+    border-radius: 30px;
+    color: #6A534A;
+    background-color: #EEE9E8;
+    padding: 10px 30px;
+}

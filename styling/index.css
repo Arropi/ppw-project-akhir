@@ -1,0 +1,21 @@
+.container-login{
+    background-color: #A67C52;
+    border-radius: 35px;
+}
+
+.btn-submit{
+    border-radius: 30px;
+    color: white;
+    background-color: #55423B;
+    padding: 10px 30px;
+}
+
+@media (max-width: 768px){
+    .img{
+        width: 100% !important;
+        border-radius: 35px;
+    }
+    .form-container{
+        width: 100% !important; 
+    }
+}
