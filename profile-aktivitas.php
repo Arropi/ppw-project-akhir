@@ -25,10 +25,20 @@
         exit;
     }
 
+    if($_SESSION['user_id']){
+        $user_id_from_session = (int)$_SESSION['user_id']; 
+        $query_data = "SELECT * FROM users_tbl WHERE user_id = " . $user_id_from_session;
+        $result_data = mysqli_query($koneksi, $query_data);
+        $data = mysqli_fetch_assoc($result_data);
+        mysqli_free_result($result_data);
+    } else {
+        header('location: index.php');
+    }
+
     if (isset($_GET['artwork']) && isset($_SESSION['user_id'])) {
         $artwork_id = (int)$_GET['artwork'];
         $user_id_from_session = (int)$_SESSION['user_id']; 
-        $query_image = "SELECT gambar, tipe_gambar FROM artwork WHERE user_id = " . $user_id_from_session. " AND artwork_id = ". $artwork_id;
+        $query_image = "SELECT gambar, tipe_gambar FROM artwork WHERE artwork_id = ". $artwork_id;
         $result_image = mysqli_query($koneksi, $query_image);
         
 
@@ -52,13 +62,12 @@
         $result_data = mysqli_query($koneksi, $query_data);
         $data = mysqli_fetch_assoc($result_data);
         mysqli_free_result($result_data);
-        $query_artwork_id = "SELECT artwork_id FROM artwork WHERE user_id = ". $user_id_from_session;
+        $query_artwork_id = "SELECT DISTINCT artwork_id FROM komentar WHERE user_id = ". $user_id_from_session;
         $data_artwork_id  = mysqli_query($koneksi, $query_artwork_id);
         $data_id = mysqli_fetch_all($data_artwork_id, MYSQLI_ASSOC);
     } else {
         header('location: index.php');
     }
-
 
 
 ?>
@@ -129,15 +138,13 @@
             object-fit: cover;
         }
         .content{
+            justify-content: center;
+            align-items: center;
             display: flex;
             flex-wrap: wrap;
             width: 100%;
             height: fit-content;
             gap: 10px;
-        }
-        .container-ayam{
-            width: 100%;
-            height: fit-content;
         }
     </style>
 </head>
@@ -156,34 +163,33 @@
         </section>    
         <section class="w-100 bar-profile mt-3 border-bottom border-dark border-5 d-flex justify-content-center align-items-center">
             <a href="profile-dashboard.php" class="text-decoration-none">
-                <div class="navigator " >
+                <div class="navigator" tampilan="dashboard" >
                     <h2>Dashboard</h2>
                 </div>
             </a>
-            <div class="navigator active" tampilan="galeri" >
-                <h2>Galeri</h2>
-            </div>
-            <a href="profile-aktivitas.php" class="text-decoration-none">
-                <div class="navigator " >
-                    <h2>Aktifitas</h2>
+            <a href="profile.php" class="text-decoration-none">
+                <div class="navigator " tampilan="galeri" >
+                    <h2>Galeri</h2>
                 </div>
             </a>
+            <div class="navigator active " tampilan="aktifitas">
+                <h2>Aktifitas</h2>
+            </div>
         </section>
         
         <section class='bar-profile'>
-            <div class="galeri-content content mt-4 " id="galeri">
+            <div class="aktivitas-content content mt-4" id="aktifitas">
                 <?php 
                     if($data_id){
                         foreach ($data_id as $data_gambar) {
                             ?>
-                            <a href="artwork.php?artwork=<?php echo $data_gambar['artwork_id'] ?>" class=" w-auto text-decoration-none " style="display: inline-block; margin: 10px; width: 20%;">
+                            <a href="artwork.php?artwork=<?php echo $data_gambar['artwork_id'] ?>" class=" text-decoration-none container-ayam">
                                 <img src="?artwork=<?php echo $data_gambar['artwork_id'] ?>" class=" w-100 img-art shadow" alt=""> 
                             </a>
                             <?php
                         }
                     }
                 ?>
-                
             </div>
         </section>
     </main>
@@ -191,6 +197,5 @@
     <?php 
     include 'navbar.php'
     ?>
-    
 </body>
 </html>

@@ -3,27 +3,34 @@
     require 'session.php';
 
     if (isset($_GET['image']) && isset($_SESSION['user_id'])) {
-        $stid = oci_parse($conn, 'SELECT IMAGE_PROFILE, IMAGE_TYPE FROM users_tbl WHERE user_id = :user_id');
-        oci_bind_by_name($stid, ':user_id', $_SESSION['user_id']);
-        oci_execute($stid);
-        $row = oci_fetch_array($stid, OCI_ASSOC + OCI_RETURN_LOBS);
+        $user_id_from_session = (int)$_SESSION['user_id']; 
+        $query_image = "SELECT IMAGE_PROFILE, IMAGE_TYPE FROM users_tbl WHERE user_id = " . $user_id_from_session;
+        $result_image = mysqli_query($koneksi, $query_image);
+        
 
-        if ($row && $row['IMAGE_PROFILE'] != null && strlen($row['IMAGE_PROFILE']) > 0) {
-            header("Content-Type: " . $row['IMAGE_TYPE']);
-            echo $row['IMAGE_PROFILE'];
+        if ($result_image) {
+            $row_image = mysqli_fetch_assoc($result_image);
+            mysqli_free_result($result_image); 
+            if ($row_image['IMAGE_PROFILE'] != null ) {
+                header("Content-Type: " . $row_image['IMAGE_TYPE']);
+                echo $row_image['IMAGE_PROFILE']; 
+            } else {
+                header("Content-Type: image/jpeg");
+                readfile('./assets/profile.jpg'); 
+            }
         } else {
             header("Content-Type: image/jpeg");
             readfile('./assets/profile.jpg');
         }
-        exit; 
+        exit;
     }
 
     if($_SESSION['user_id']){
-        $stid = oci_parse($conn, 'SELECT * FROM users_tbl where user_id = :user_id');
-        oci_bind_by_name($stid, ':user_id', $_SESSION['user_id']);
-        oci_execute($stid);
-        $data = oci_fetch_array($stid, OCI_ASSOC + OCI_RETURN_NULLS);
-        
+        $user_id_from_session = (int)$_SESSION['user_id']; 
+        $query_data = "SELECT * FROM users_tbl WHERE user_id = " . $user_id_from_session;
+        $result_data = mysqli_query($koneksi, $query_data);
+        $data = mysqli_fetch_assoc($result_data);
+        mysqli_free_result($result_data);
     } else {
         header('location: index.php');
     }
@@ -37,6 +44,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href=".\styling\edit-profile.css">
+    <style>
+        .filler{
+            height: 130px;
+        }
+    </style>
 </head>
 <body class="p-5 d-flex justify-content-center align-items-center">
     <script src="https://kit.fontawesome.com/df4d136803.js" crossorigin="anonymous"></script>
@@ -46,7 +58,7 @@
             <div class="img-container position-relative overflow-hidden">
                 <input type="file" id="img-profile" accept="image/*" name="image">
                 <label for="img-profile" class="position-absolute d-block h-100 w-100" >
-                    <img id="img-show" src="?image=<?php echo $data['USER_ID']?>" alt="Profile Picture" class="img">
+                    <img id="img-show" src="?image=<?php echo $data['user_id']?>" alt="Profile Picture" class="img">
                     <div class="overlay position-absolute bottom-0 text-center h-25 w-100">
                         <span><i class="fa-solid fa-camera"></i></span>
                     </div>
@@ -55,9 +67,9 @@
         </div>
         <div class="w-100">
             <label for="username" class="form-label mt-3"><h2>Username</h2></label>
-            <input type="text" name="username" value="<?php echo $data['USERNAME'] ?>" id="username" class="form-control w-25 form-input-user" placeholder="Masukkan username baru">
+            <input type="text" name="username" value="<?php echo $data['username'] ?>" id="username" class="form-control w-25 form-input-user" placeholder="Masukkan username baru">
             <label for="bio" class="form-label mt-3"><h2>Bio</h2></label>
-            <input type="text" name="bio" id="bio" value="<?php echo $data['USER_BIO'] ?>" placeholder="Masukkan bio baru" class=" form-control h-75 w-75 form-input-bio">
+            <input type="text" name="bio" id="bio" value="<?php echo $data['user_bio'] ?>" placeholder="Masukkan bio baru" class=" form-control h-75 w-75 form-input-bio">
             <?php 
             if(isset($_POST['simpan'])){
                 $file_type = $_FILES['image']['type'];
@@ -85,31 +97,40 @@
                 }
 
                 
-                if(empty($errors)) {
-                    if($_FILES['image']['size']>0 && $validation){
-                        $image = file_get_contents($_FILES['image']['tmp_name']);
-                        $stid = oci_parse($conn, 'UPDATE users_tbl SET IMAGE_PROFILE = empty_blob(), IMAGE_TYPE = COALESCE(:image_type, image_type), USERNAME = COALESCE(:username, USERNAME), USER_BIO = COALESCE(:bio, USER_BIO) WHERE user_id =:user_id RETURNING IMAGE_PROFILE INTO :image_blob');
-                        $blob = oci_new_descriptor($conn, OCI_D_LOB);
+                if(empty($errors) && $validation) {
+                    $user_id_from_session = (int)$_SESSION['user_id'];
+                    $image_data = null;
+                    $image_type = null;
 
-                        oci_bind_by_name($stid, ':user_id', $_SESSION['user_id']);
-                        oci_bind_by_name($stid, ':image_blob', $blob, -1, OCI_B_BLOB);
-                        oci_bind_by_name($stid, ':image_type', $_FILES['image']['type']);
-                        oci_bind_by_name($stid, ':username', $username);
-                        oci_bind_by_name($stid, ':bio', $bio);
+                    $escaped_username = mysqli_real_escape_string($koneksi, $username);
+                    $escaped_bio = mysqli_real_escape_string($koneksi, $bio);
 
-                        oci_execute($stid, OCI_NO_AUTO_COMMIT);
-                        $blob->save($image);
-                        oci_commit($conn);
-                        header('location: profile.php');
-                    } elseif($validation){
-                        $stid = oci_parse($conn, 'UPDATE users_tbl SET USERNAME = COALESCE(:username, USERNAME), USER_BIO = COALESCE(:bio, USER_BIO) WHERE user_id = :user_id');
-                        oci_bind_by_name($stid, ':user_id', $_SESSION['user_id']);
-                        oci_bind_by_name($stid, ':username', $username);
-                        oci_bind_by_name($stid, ':bio', $bio);
-                        oci_execute($stid);
-                        header('location: profile.php');
+                    if($_FILES['image']['size'] > 0){
+                        $image_data = file_get_contents($_FILES['image']['tmp_name']);
+                        $image_type = $_FILES['image']['type'];
+
+                        $image_data = mysqli_real_escape_string($koneksi, $image_data);
+                        $image_type = mysqli_real_escape_string($koneksi, $image_type);
                     }
-                } else {
+
+                    $query_update = "UPDATE users_tbl SET 
+                                        IMAGE_PROFILE = COALESCE('$image_data', IMAGE_PROFILE), 
+                                        IMAGE_TYPE = COALESCE('$image_type', IMAGE_TYPE), 
+                                        USERNAME = COALESCE('$escaped_username', USERNAME), 
+                                        USER_BIO = COALESCE('$escaped_bio', USER_BIO) 
+                                    WHERE user_id = $user_id_from_session";
+                    
+                    $update_success = mysqli_query($koneksi, $query_update);
+                    
+                    if($update_success){
+                        header('location: profile.php');
+                        exit();
+                    } else {
+                        echo "<div class='alert alert-danger mt-3 w-100' role='alert'>";
+                        echo "Gagal memperbarui profil: " . mysqli_error($koneksi);
+                        echo "</div>";
+                    }
+                } elseif (!empty($errors)) { 
                     echo "<div class='alert alert-warning w-75 h-auto mt-3' role='alert'>";
                     echo "<ul>";
                     foreach($errors as $error) {
@@ -142,6 +163,8 @@
             </div>
         </div>
     </form>
+    <footer class="filler"></footer>
+    <?php include 'navbar.php'?>
     <script src="edit.js"></script>
 </body>
 </html>

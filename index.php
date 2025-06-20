@@ -38,18 +38,12 @@
             $email = htmlspecialchars($_POST['email']);
             $password = htmlspecialchars($_POST['password']);
             
-
-
-
             $errors = array();
-
             if(empty($email)){
                 $errors[] = "Email tidak boleh kosong";
             } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)){
                 $errors[] = "Format email tidak valid";
-
             }
-
 
             if(empty($password)){
                 $errors[] = "Password tidak boleh kosong";
@@ -57,30 +51,34 @@
                 $errors[] = "Password minimal 8 karakter";
             }
 
-
             if(empty($errors)) {
-
-                $stid = oci_parse($conn, "SELECT user_id, hash_password FROM users_tbl where email='$email'");
-                oci_execute($stid);
-                $row = oci_fetch_array($stid, OCI_ASSOC);
-                if($row){
-                    echo $row['USER_ID'];
-                    if(password_verify($password, $row['HASH_PASSWORD'])){
-                        $_SESSION['user_id'] = $row['USER_ID'];
-                        $_SESSION['login'] = true;
-                        header('location: home.php');
+                $escaped_email = mysqli_real_escape_string($koneksi, $email);
+                $query = "SELECT user_id, hash_password FROM users_tbl WHERE email = '$escaped_email'";
+                $result = mysqli_query($koneksi, $query);
+                if ($result) {
+                    $row = mysqli_fetch_assoc($result);
+                    mysqli_free_result($result); 
+                    if ($row) {
+                        if (password_verify($password, $row['hash_password'])) {
+                            $_SESSION['user_id'] = $row['user_id'];
+                            $_SESSION['login'] = true;
+                            header('location: home.php');
+                            exit(); 
+                        } else {
+                            echo "<div class='alert alert-danger mt-3 w-75' role='alert'>";
+                            echo "Password yang anda masukkan salah";
+                            echo "</div>";
+                        }
                     } else {
-                        echo "<div class='alert alert-danger mt-3 w-75' role='alert'>";
-                        echo "Password yang anda masukkan salah";
+                        echo "<div class='alert alert-warning mt-3 w-75' role='alert'>";
+                        echo "Email Belum Terdaftar";
                         echo "</div>";
                     }
                 } else {
-                    echo "<div class='alert alert-warning mt-3 w-75' role='alert'>";
-                    echo "Email Belum Terdaftar";
+                    echo "<div class='alert alert-danger mt-3 w-75' role='alert'>";
+                    echo "Kesalahan database saat menjalankan query: " . mysqli_error($koneksi);
                     echo "</div>";
                 }
-
-                
             } else {
                 echo "<div class='alert alert-warning w-75 h-auto mt-3' role='alert'>";
                 echo "<ul>";

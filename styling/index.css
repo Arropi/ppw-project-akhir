@@ -10,6 +10,10 @@
     padding: 10px 30px;
 }
 
+.cok{
+ background-color: black;
+}
+
 @media (max-width: 768px){
     .img{
         width: 100% !important;

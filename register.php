@@ -58,40 +58,57 @@
             }
 
             if(empty($errors)) {
-                $stid = oci_parse($conn, "SELECT user_id FROM users_tbl where email='$email'");
-                oci_execute($stid);
-                $row = oci_fetch_array($stid, OCI_ASSOC);
-                
-                
+                $escaped_email = mysqli_real_escape_string($koneksi, $email);
+                $query_check_email = "SELECT user_id FROM users_tbl WHERE email = '$escaped_email'";
+                $result_check_email = mysqli_query($koneksi, $query_check_email);
 
-                if($row){
-                    echo "<div class='alert alert-warning mt-3 w-75' role='alert'>";
-                    echo "Email Telah Terdaftar";
-                    echo "</div>";
-                } else {
-                    $hash_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
-                    $create_user = oci_parse($conn, 'INSERT INTO users_tbl (username, email, hash_password) VALUES (:username, :email, :hash_password) RETURNING user_id INTO :user_id');
+                if ($result_check_email) {
+                    $row_check_email = mysqli_fetch_assoc($result_check_email);
+                    mysqli_free_result($result_check_email); 
 
-                    $user_id = null;
-                    oci_bind_by_name($create_user, ":username", $username);
-                    oci_bind_by_name($create_user, ":email", $email);
-                    oci_bind_by_name($create_user, ":hash_password", $hash_password);
-                    oci_bind_by_name($create_user, ":user_id", $user_id, -1, SQLT_INT);
-                    oci_execute($create_user);
-
-                    $e = oci_error($create_user);
-                    
-                    if($create_user){
-                        session_start();
-                        $_SESSION['user_id'] = $user_id;
-                        $_SESSION['login'] = true;
-                        header('location: home.php');
-                    } else if($e){
-                        echo "<div style='padding: 10px; background-color: #d4edda; color:rgb(211, 66, 30); border-radius: 5px; margin-bottom: 15px;'>";
-                        echo $e['message'];
+                    if($row_check_email){
+                        echo "<div class='alert alert-warning mt-3 w-75' role='alert'>";
+                        echo "Email Telah Terdaftar";
                         echo "</div>";
+                    } else {
+                        $hash_password = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
+                        
+                        
+                        $escaped_username = mysqli_real_escape_string($koneksi, $username);
+                        $escaped_hash_password = mysqli_real_escape_string($koneksi, $hash_password);
+
+                    
+                        $query_insert_user = "INSERT INTO users_tbl (username, email, hash_password) VALUES ('$escaped_username', '$escaped_email', '$escaped_hash_password')";
+                        $execute_success = mysqli_query($koneksi, $query_insert_user);
+
+                        if($execute_success){
+                            $user_id = mysqli_insert_id($koneksi); 
+                            
+                            session_start();
+                            $_SESSION['user_id'] = $user_id;
+                            $_SESSION['login'] = true;
+                            
+                            header('location: home.php');
+                            exit(); 
+                        } else {
+                            echo "<div class='alert alert-danger mt-3 w-75' role='alert'>";
+                            echo "Gagal mendaftarkan pengguna: " . mysqli_error($koneksi);
+                            echo "</div>";
+                        }
                     }
+                } else {
+                    echo "<div class='alert alert-danger mt-3 w-75' role='alert'>";
+                    echo "Kesalahan database saat menjalankan query cek email: " . mysqli_error($koneksi);
+                    echo "</div>";
                 }
+            } else{
+                echo "<div class='alert alert-warning w-75 h-auto mt-3' role='alert'>";
+                echo "<ul>";
+                foreach($errors as $error) {
+                    echo "<li>$error</li>";
+                }
+                echo "</ul>";
+                echo "</div>";
             }
         };
     ?>

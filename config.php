@@ -1,20 +1,16 @@
 <?php
-$host = "0.tcp.ap.ngrok.io";
-$port = "16006";
-$sid = "XE";
-$username = "C##VARTA";
-$password = "Rofi0602"; 
 
+$host = "localhost";
+$user = "root";
+$password = "";
+$database = "varta";
 
+// Buat koneksi
+$koneksi = mysqli_connect($host, $user, $password, $database);
 
-$conn = oci_connect($username, $password, "(DESCRIPTION =
-    (ADDRESS = (PROTOCOL = TCP)(HOST = $host)(PORT = $port))
-    (CONNECT_DATA = (SID = $sid))
-)");
+// Cek koneksi
+if (!$koneksi) {
+    die("Koneksi gagal: " . mysqli_connect_error());
+}
 
-
-if (!$conn) {
-    $e = oci_error();
-    die("Koneksi gagal: " . $e);
-} 
 ?>

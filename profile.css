@@ -1,0 +1,43 @@
+.img-profile{
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+}
+
+.active{
+    border-top: 5px solid black !important;
+}
+
+.testi{
+    background-color: red;
+}
+
+.bar-profile{
+    gap: 10%;
+}
+
+.interaction-text-edit:hover{
+    color: #14eb4a !important;
+}
+
+.interaction-text-logout:hover{
+    color: #cb2b0b !important;
+}
+
+.navigator {
+    cursor: pointer;
+}
+
+.info {
+    width: 30%;
+    background-color: #A67C52;
+    border-radius: 10px;
+}
+
+.pagination .page-item.active .page-link {
+    z-index: 3;
+    color: #F4F1EF; /* Warna teks untuk link aktif */
+    background-color: #7E5A50; /* Warna latar belakang untuk link aktif */
+    border-color: #7E5A50; /* Warna border untuk link aktif (cocokkan dengan background) */
+}
